@@ -1,0 +1,7 @@
+[submodule "sysmind-ui"]
+	path = sysmind-ui
+	url = git@github.com:bijuvarghese/sysmind-ui.git
+
+[submodule "sysmind-mcp"]
+	path = sysmind-mcp
+	url = git@github.com:bijuvarghese/sysmind-mcp.git

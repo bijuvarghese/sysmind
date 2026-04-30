@@ -1,0 +1,50 @@
+services:
+
+  # ── Spring Boot MCP backend ─────────────────────────────────────────────────
+  sysmind-mcp:
+    build:
+      context: ./sysmind-mcp
+      dockerfile: Dockerfile
+    container_name: sysmind-mcp
+    # Port no longer exposed to host — nginx proxies /agent internally
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
+      - LLM_URL=${LLM_URL:-http://host.docker.internal:1234}
+      - LLM_TIMEOUT=${LLM_TIMEOUT:-3m}
+    restart: unless-stopped
+    networks:
+      - sysmind-net
+
+  # ── Next.js UI frontend ─────────────────────────────────────────────────────
+  sysmind-ui:
+    build:
+      context: ./sysmind-ui
+      dockerfile: Dockerfile
+    container_name: sysmind-ui
+    # Port no longer exposed to host — nginx proxies / internally
+    environment:
+      - MCP_BACKEND_URL=${MCP_BACKEND_URL:-http://sysmind-mcp:8080}
+    depends_on:
+      - sysmind-mcp
+    restart: unless-stopped
+    networks:
+      - sysmind-net
+
+  # ── Nginx reverse proxy (single public entry point) ──────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: sysmind-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - sysmind-ui
+      - sysmind-mcp
+    restart: unless-stopped
+    networks:
+      - sysmind-net
+
+networks:
+  sysmind-net:
+    driver: bridge

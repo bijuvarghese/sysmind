@@ -16,7 +16,7 @@ The usual local stack is:
 Clone this repository with its submodules:
 
 ```bash
-git clone --recurse-submodules <repo-url>
+git clone --recurse-submodules https://github.com/bijuvarghese/sysmind.git
 ```
 
 If you already cloned it, initialize the service submodules before building:

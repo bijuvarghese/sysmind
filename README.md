@@ -36,12 +36,17 @@ Important values:
 ```env
 LLM_URL=http://host.docker.internal:1234
 LLM_TIMEOUT=3m
-NEWS_FEED_URL=https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en
-NEWS_LOCATION_FEED_URL_TEMPLATE=https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en
+NEWS_LANGUAGE=en-US
+NEWS_COUNTRY=US
+NEWS_CEID=
+NEWS_FEED_URL=https://news.google.com/rss?hl={language}&gl={country}&ceid={ceid}
+NEWS_LOCATION_FEED_URL_TEMPLATE=https://news.google.com/rss/search?q={query}&hl={language}&gl={country}&ceid={ceid}
 MCP_BACKEND_URL=http://sysmind-mcp:8080
 SPRING_PROFILES_ACTIVE=docker
 NGINX_PORT=80
 ```
+
+News URL templates support `{query}`, `{language}`/`{hl}`, `{country}`/`{gl}`, `{languageCode}`, and `{ceid}`. If `NEWS_CEID` is empty, the backend derives it from `NEWS_COUNTRY` and `NEWS_LANGUAGE`, for example `US:en`.
 
 For direct local JVM runs of `sysmind-mcp`, set `LLM_URL` to `http://localhost:1234` if the LLM is running on the same host.
 

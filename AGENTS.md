@@ -7,6 +7,14 @@
 
 ## Working Commands
 
+### Repository root
+
+- Initialize service submodules after clone: `./bootstrap-submodules.sh`
+- Rebuild and start the full Docker stack: `./deploy.sh`
+- Stop the Compose stack: `./shutdown.sh`
+- Remove this project’s Compose services, anonymous volumes, and local images: `./cleanup-project.sh`
+- Run global Docker cleanup only with explicit confirmation: `./cleanup-docker-global.sh --force`
+
 ### `sysmind-ui`
 
 - Install deps: `npm ci`
@@ -26,6 +34,7 @@
 - UI routes in `sysmind-ui/app/api/*` proxy to `MCP_BACKEND_URL`, defaulting to `http://localhost:8080`.
 - MCP service reads `LLM_URL`, defaulting to `http://localhost:1234`.
 - Default local flow: run `sysmind-mcp` on `:8080`, run `sysmind-ui` on `:3000`, and ensure the LLM endpoint is reachable at `LLM_URL`.
+- `deploy.sh` runs `./bootstrap-submodules.sh` before `docker compose up -d --build`.
 
 ## Container Commands
 

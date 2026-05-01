@@ -36,6 +36,7 @@ Important values:
 ```env
 LLM_URL=http://host.docker.internal:1234
 LLM_TIMEOUT=3m
+NEWS_FEED_URL=https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en
 MCP_BACKEND_URL=http://sysmind-mcp:8080
 SPRING_PROFILES_ACTIVE=docker
 NGINX_PORT=80

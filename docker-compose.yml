@@ -11,6 +11,7 @@ services:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
       - LLM_URL=${LLM_URL:-http://host.docker.internal:1234}
       - LLM_TIMEOUT=${LLM_TIMEOUT:-3m}
+      - NEWS_FEED_URL=${NEWS_FEED_URL}
     restart: unless-stopped
     networks:
       - sysmind-net

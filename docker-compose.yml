@@ -12,6 +12,7 @@ services:
       - LLM_URL=${LLM_URL:-http://host.docker.internal:1234}
       - LLM_TIMEOUT=${LLM_TIMEOUT:-3m}
       - NEWS_FEED_URL=${NEWS_FEED_URL}
+      - NEWS_LOCATION_FEED_URL_TEMPLATE=${NEWS_LOCATION_FEED_URL_TEMPLATE}
     restart: unless-stopped
     networks:
       - sysmind-net

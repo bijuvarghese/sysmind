@@ -6,16 +6,29 @@ services:
       context: ./sysmind-mcp
       dockerfile: Dockerfile
     container_name: sysmind-mcp
-    # Port no longer exposed to host — nginx proxies /agent internally
+    # Port no longer exposed to host — nginx proxies /mcp internally
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
-      - LLM_URL=${LLM_URL:-http://host.docker.internal:1234}
-      - LLM_TIMEOUT=${LLM_TIMEOUT:-3m}
-      - NEWS_FEED_URL=${NEWS_FEED_URL}
-      - NEWS_LOCATION_FEED_URL_TEMPLATE=${NEWS_LOCATION_FEED_URL_TEMPLATE}
       - NEWS_LANGUAGE=${NEWS_LANGUAGE:-en-US}
       - NEWS_COUNTRY=${NEWS_COUNTRY:-US}
       - NEWS_CEID=${NEWS_CEID:-}
+      - CHROMA_URL=${CHROMA_URL:-http://chroma:8000}
+      - CHROMA_TIMEOUT=${CHROMA_TIMEOUT:-5s}
+      - CHROMA_TENANT=${CHROMA_TENANT:-default_tenant}
+      - CHROMA_DATABASE=${CHROMA_DATABASE:-default_database}
+      - CHROMA_COLLECTION=${CHROMA_COLLECTION:-sysmind}
+    depends_on:
+      - chroma
+    restart: unless-stopped
+    networks:
+      - sysmind-net
+
+  # ── Chroma vector database ──────────────────────────────────────────────────
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: sysmind-chroma
+    volumes:
+      - chroma-data:/data
     restart: unless-stopped
     networks:
       - sysmind-net
@@ -53,3 +66,6 @@ services:
 networks:
   sysmind-net:
     driver: bridge
+
+volumes:
+  chroma-data:

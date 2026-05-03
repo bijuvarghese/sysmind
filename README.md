@@ -1,15 +1,15 @@
 # SysMind
 
-SysMind is a two-service local agent workspace:
+SysMind is a two-service local MCP workspace:
 
 - `sysmind-ui`: Next.js 16 chat UI.
-- `sysmind-mcp`: Spring Boot 4 MCP-style backend that routes prompts to system tools or an OpenAI-compatible local LLM endpoint.
+- `sysmind-mcp`: Spring Boot 4 stateless MCP tool server.
 
 The usual local stack is:
 
 - MCP backend on `http://localhost:8080`
+- Stateless MCP endpoint on `http://localhost:8080/mcp`
 - UI on `http://localhost:3000`
-- LLM endpoint at `LLM_URL`
 
 ## Configuration
 
@@ -34,21 +34,79 @@ cp .env.example .env
 Important values:
 
 ```env
-LLM_URL=http://host.docker.internal:1234
-LLM_TIMEOUT=3m
+CHROMA_URL=http://chroma:8000
+CHROMA_TIMEOUT=5s
+CHROMA_TENANT=default_tenant
+CHROMA_DATABASE=default_database
+CHROMA_COLLECTION=sysmind
 NEWS_LANGUAGE=en-US
 NEWS_COUNTRY=US
 NEWS_CEID=
-NEWS_FEED_URL=https://news.google.com/rss?hl={language}&gl={country}&ceid={ceid}
-NEWS_LOCATION_FEED_URL_TEMPLATE=https://news.google.com/rss/search?q={query}&hl={language}&gl={country}&ceid={ceid}
 MCP_BACKEND_URL=http://sysmind-mcp:8080
 SPRING_PROFILES_ACTIVE=docker
 NGINX_PORT=80
 ```
 
-News URL templates support `{query}`, `{language}`/`{hl}`, `{country}`/`{gl}`, `{languageCode}`, and `{ceid}`. If `NEWS_CEID` is empty, the backend derives it from `NEWS_COUNTRY` and `NEWS_LANGUAGE`, for example `US:en`.
+The Docker stack also starts Chroma at `http://chroma:8000` for vector storage. The first MCP integration exposes a `chroma_status` tool so clients can verify connectivity before retrieval features are added.
 
-For direct local JVM runs of `sysmind-mcp`, set `LLM_URL` to `http://localhost:1234` if the LLM is running on the same host.
+## MCP Endpoint
+
+The backend exposes a stateless MCP Streamable HTTP endpoint:
+
+- Direct backend: `POST http://localhost:8080/mcp`
+- Docker/nginx: `POST http://localhost:${NGINX_PORT:-80}/mcp`
+
+Use these headers from Postman or another JSON-RPC client:
+
+```http
+Content-Type: application/json
+Accept: application/json, text/event-stream
+```
+
+Initialize:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2025-06-18",
+    "capabilities": {},
+    "clientInfo": {
+      "name": "postman",
+      "version": "1.0.0"
+    }
+  }
+}
+```
+
+List tools:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/list",
+  "params": {}
+}
+```
+
+Call a tool:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "disk_usage",
+    "arguments": {}
+  }
+}
+```
+
+The MCP route is stateless, so callers do not need to send `Mcp-Session-Id`.
 
 ## Docker
 

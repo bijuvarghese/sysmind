@@ -1,16 +1,17 @@
 # SysMind MCP Route Map
 
-Goal: turn `sysmind-mcp` from an MCP-style REST agent backend into a real Model Context Protocol server that MCP clients can discover, initialize, list tools from, and call tools through.
+Goal: keep `sysmind-mcp` as a real Model Context Protocol server that MCP clients can discover, initialize, list tools from, and call tools through.
 
 ## Current State
 
-`sysmind-mcp` currently exposes a custom REST API:
+`sysmind-mcp` now exposes MCP over stateless Streamable HTTP at `/mcp`.
 
-- `POST /agent` accepts a user prompt, asks the LLM to select a local tool, executes it, then asks the LLM to write the final answer.
-- `GET /v1/models` proxies the configured OpenAI-compatible model list.
-- Tool implementations already exist behind `SystemTool`: `disk_usage`, `ram_usage`, `latest_news`, and `chroma_status`.
+Registered MCP tools:
 
-This is useful agent behavior, but it is not MCP-compliant yet because MCP clients expect JSON-RPC protocol methods such as `initialize`, `tools/list`, and `tools/call` over an MCP transport.
+- `disk_usage`
+- `ram_usage`
+- `latest_news`
+- `chroma_status`
 
 ## Target Shape
 
@@ -22,7 +23,7 @@ Primary target:
 - Spring AI `spring-ai-starter-mcp-server-webflux`
 - Streamable HTTP transport
 - Single MCP endpoint: `/mcp`
-- Existing REST endpoints preserved during migration
+- No legacy REST agent/model endpoints
 
 Optional later target:
 
@@ -32,16 +33,11 @@ Optional later target:
 
 | Surface | Route or Method | Purpose | Status |
 | --- | --- | --- | --- |
-| Legacy REST | `POST /agent` | Existing prompt-to-agent endpoint for SysMind UI | Keep during migration |
-| Legacy REST | `GET /v1/models` | Existing model proxy for SysMind UI | Keep during migration |
-| MCP HTTP | `POST /mcp` | Receives JSON-RPC MCP requests and notifications | Add |
-| MCP HTTP | `GET /mcp` | Optional server-to-client stream for Streamable HTTP | Add if needed by starter |
-| MCP HTTP | `DELETE /mcp` | Optional session termination | Add if stateful sessions are enabled |
-| MCP JSON-RPC | `initialize` | Protocol and capability negotiation | Add |
-| MCP JSON-RPC | `notifications/initialized` | Client initialization notification | Add |
-| MCP JSON-RPC | `ping` | Basic health/liveness protocol method | Add |
-| MCP JSON-RPC | `tools/list` | Expose SysMind tools to MCP clients | Add |
-| MCP JSON-RPC | `tools/call` | Execute one SysMind tool by name with JSON arguments | Add |
+| MCP HTTP | `POST /mcp` | Receives stateless JSON-RPC MCP requests | Complete |
+| MCP JSON-RPC | `initialize` | Protocol and capability negotiation | Complete |
+| MCP JSON-RPC | `ping` | Basic health/liveness protocol method | Complete via MCP server |
+| MCP JSON-RPC | `tools/list` | Expose SysMind tools to MCP clients | Complete |
+| MCP JSON-RPC | `tools/call` | Execute one SysMind tool by name with JSON arguments | Complete |
 | MCP JSON-RPC | `resources/list`, `resources/read` | Future Chroma or project context resources | Later |
 | MCP JSON-RPC | `prompts/list`, `prompts/get` | Future reusable prompt templates | Later |
 
@@ -51,12 +47,14 @@ Optional later target:
 2. Configure the MCP server:
    - `spring.ai.mcp.server.name=sysmind-mcp`
    - `spring.ai.mcp.server.version=1.0.0`
-   - `spring.ai.mcp.server.protocol=STREAMABLE`
+   - `spring.ai.mcp.server.protocol=STATELESS`
    - endpoint path `/mcp`, if the starter exposes a path property in the chosen version.
 3. Keep `spring-boot-starter-webflux`; do not switch the app to MVC.
 4. Decide whether sessions are stateful or stateless:
    - Prefer stateless Streamable HTTP first for simpler local use.
    - Move to stateful sessions only if a target client requires resumable streams or server-to-client notifications.
+
+Status: complete. `sysmind-mcp` uses Spring AI's WebFlux MCP server starter, `STATELESS` protocol, and `/mcp`.
 
 Deliverable: app starts with a real MCP endpoint and answers `initialize`.
 
@@ -78,7 +76,10 @@ Implementation notes:
 - Preserve the existing `SystemTool` interface initially.
 - Add typed argument DTOs where tools accept input, especially `latest_news`.
 - Return MCP tool results directly from the tool call; do not route MCP tool calls through the LLM.
-- Keep the old `MCPRouter` only for `POST /agent`, because it is an agent orchestration layer, not the MCP protocol layer.
+- Do not route MCP tool calls through an LLM.
+- Do not keep the old REST prompt router.
+
+Status: complete for `disk_usage`, `ram_usage`, `latest_news`, and `chroma_status`.
 
 Deliverable: `tools/list` returns all SysMind tools, and `tools/call` executes each one.
 
@@ -101,7 +102,6 @@ Deliverable: tools are predictable enough for Claude Desktop, Cursor, Codex, and
 
 1. Update Docker and nginx routing:
    - Proxy `/mcp` to `sysmind-mcp:8080`.
-   - Preserve `/agent` for SysMind UI.
 2. Add example client configs:
    - Streamable HTTP client config pointing to `http://localhost/mcp` or `http://localhost:8080/mcp`.
    - Optional stdio config if stdio support is added.
@@ -112,6 +112,8 @@ Deliverable: tools are predictable enough for Claude Desktop, Cursor, Codex, and
 
 Deliverable: documented instructions for connecting a real MCP client.
 
+Status: in progress. nginx now proxies `/mcp`, and the README includes stateless JSON-RPC examples.
+
 ## Phase 5: Verification
 
 Automated checks:
@@ -120,7 +122,6 @@ Automated checks:
 - Integration test for `initialize`.
 - Integration test for `tools/list`.
 - Integration test for `tools/call` for each tool.
-- Regression tests for existing `POST /agent` and `GET /v1/models`.
 
 Manual checks:
 
@@ -128,7 +129,6 @@ Manual checks:
 - Connect with an MCP inspector/client.
 - Confirm the client lists `disk_usage`, `ram_usage`, `latest_news`, and `chroma_status`.
 - Call each tool from the client.
-- Confirm SysMind UI still works through `/agent`.
 
 Suggested verification commands:
 
@@ -148,7 +148,7 @@ The migration is done when:
 - `tools/call` executes the tools without requiring an LLM planning step.
 - Existing SysMind UI behavior still works.
 - Docker/nginx exposes the MCP endpoint intentionally.
-- README docs clearly distinguish the legacy REST agent API from the MCP server API.
+- README docs clearly document `/mcp` as the backend API.
 
 ## Recommended First Pull Request
 

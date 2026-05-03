@@ -10,10 +10,12 @@
 ### Repository root
 
 - Initialize service submodules after clone: `./bootstrap-submodules.sh`
+- Create local environment file from the sample: `cp .env.example .env`
 - Rebuild and start the full Docker stack: `./deploy.sh`
 - Stop the Compose stack: `./shutdown.sh`
 - Remove this project’s Compose services, anonymous volumes, and local images: `./cleanup-project.sh`
 - Run global Docker cleanup only with explicit confirmation: `./cleanup-docker-global.sh --force`
+- Run the standard verification pass: `cd sysmind-mcp && ./mvnw test && cd ../sysmind-ui && npm run lint && npm run build`
 
 ### `sysmind-ui`
 
@@ -32,9 +34,12 @@
 ## Local Integration Notes
 
 - UI routes in `sysmind-ui/app/api/*` proxy to `MCP_BACKEND_URL`, defaulting to `http://localhost:8080`.
-- MCP service reads `LLM_URL`, defaulting to `http://localhost:1234`.
-- Default local flow: run `sysmind-mcp` on `:8080`, run `sysmind-ui` on `:3000`, and ensure the LLM endpoint is reachable at `LLM_URL`.
+- Real MCP clients call the stateless JSON-RPC endpoint at `POST /mcp`; no `Mcp-Session-Id` header is required.
+- Default local flow: run `sysmind-mcp` on `:8080` and run `sysmind-ui` on `:3000`.
 - `deploy.sh` runs `./bootstrap-submodules.sh` before `docker compose up -d --build`.
+- `bootstrap-submodules.sh` first syncs/init submodules when `.gitmodules` exists, then clones missing `sysmind-ui` and `sysmind-mcp` checkouts; it exits if either target directory is non-empty but not a Git checkout.
+- `deploy.sh`, `shutdown.sh`, and `cleanup-project.sh` wait for Docker Desktop to come up if `docker info` is not yet available.
+- The root Compose stack exposes only nginx on `${NGINX_PORT:-80}`; `sysmind-ui` and `sysmind-mcp` stay on the internal Compose network.
 
 ## Container Commands
 

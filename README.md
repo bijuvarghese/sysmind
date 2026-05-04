@@ -5,11 +5,16 @@ SysMind is a two-service local MCP workspace:
 - `sysmind-ui`: Next.js 16 chat UI.
 - `sysmind-mcp`: Spring Boot 4 stateless MCP tool server.
 
-The usual local stack is:
+Local development defaults:
 
 - MCP backend on `http://localhost:8080`
 - Stateless MCP endpoint on `http://localhost:8080/mcp`
 - UI on `http://localhost:3000`
+
+The Docker stack exposes a single nginx entry point:
+
+- UI on `http://localhost:${NGINX_PORT:-80}`
+- Stateless MCP endpoint on `http://localhost:${NGINX_PORT:-80}/mcp`
 
 ## Configuration
 
@@ -31,9 +36,10 @@ Copy the sample env file before running the Docker stack:
 cp .env.example .env
 ```
 
-Important values:
+Values in `.env.example`:
 
 ```env
+MCP_BACKEND_URL=http://sysmind-mcp:8080
 CHROMA_URL=http://chroma:8000
 CHROMA_TIMEOUT=5s
 CHROMA_TENANT=default_tenant
@@ -42,12 +48,16 @@ CHROMA_COLLECTION=sysmind
 NEWS_LANGUAGE=en-US
 NEWS_COUNTRY=US
 NEWS_CEID=
-MCP_BACKEND_URL=http://sysmind-mcp:8080
+```
+
+Optional Docker overrides:
+
+```env
 SPRING_PROFILES_ACTIVE=docker
 NGINX_PORT=80
 ```
 
-The Docker stack also starts Chroma at `http://chroma:8000` for vector storage. The first MCP integration exposes a `chroma_status` tool so clients can verify connectivity before retrieval features are added.
+The Docker stack also starts Chroma at `http://chroma:8000` for vector storage. The `chroma_status` tool lets clients verify connectivity before retrieval features are added.
 
 ## MCP Endpoint
 
@@ -92,6 +102,14 @@ List tools:
 }
 ```
 
+Registered tools:
+
+- `disk_usage`: returns disk free, used, and total values.
+- `ram_usage`: returns memory free, used, and total values.
+- `latest_news`: fetches current web news headlines from the configured RSS feed.
+- `chroma_status`: checks whether the Chroma vector database is reachable.
+- `machine_status`: returns computer name, OS, CPU, RAM, storage, and uptime details.
+
 Call a tool:
 
 ```json
@@ -101,6 +119,20 @@ Call a tool:
   "method": "tools/call",
   "params": {
     "name": "disk_usage",
+    "arguments": {}
+  }
+}
+```
+
+For a complete machine report, call `machine_status` with empty arguments:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "machine_status",
     "arguments": {}
   }
 }
@@ -133,6 +165,20 @@ Global Docker cleanup is intentionally separate and requires an explicit flag:
 ```bash
 ./cleanup-docker-global.sh --force
 ```
+
+## Shell Scripts
+
+Run these from the repository root.
+
+| Script | Usage | What it does |
+| --- | --- | --- |
+| `bootstrap-submodules.sh` | `./bootstrap-submodules.sh` | Syncs and initializes Git submodules when `.gitmodules` exists. If a service checkout is missing, it clones `sysmind-ui` and `sysmind-mcp` from GitHub. If a service directory exists but is not a Git checkout, it stops and asks you to move it aside or clone manually. |
+| `deploy.sh` | `./deploy.sh` | Ensures Docker is running, starts Docker Desktop on macOS when needed, runs `bootstrap-submodules.sh`, then rebuilds and starts the Compose stack with `docker compose up -d --build`. |
+| `shutdown.sh` | `./shutdown.sh` | Ensures Docker is running, then stops this Compose project with `docker compose down --remove-orphans`. It leaves named volumes and locally built images in place. |
+| `cleanup-project.sh` | `./cleanup-project.sh` | Ensures Docker is running, then removes this project’s Compose services, networks, anonymous volumes, orphan containers, and locally built images with `docker compose down --volumes --rmi local --remove-orphans`. It is scoped to this Compose project. |
+| `cleanup-docker-global.sh` | `./cleanup-docker-global.sh --force` | Requires `--force`. Stops and removes every Docker container on the machine, then prunes unused images, networks, and volumes with `docker system prune -af --volumes`. Use only when you want machine-wide Docker cleanup. |
+
+The Docker scripts use `open -a Docker` when Docker is not running, so they are tuned for macOS with Docker Desktop. On other platforms, start Docker manually before running them.
 
 ## Local Development
 

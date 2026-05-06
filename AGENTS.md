@@ -4,6 +4,7 @@
 
 - `sysmind-ui`: Next.js 16 frontend.
 - `sysmind-mcp`: Spring Boot 4 MCP backend.
+- `sysmind-agent`: Spring Boot agent service.
 
 ## Working Commands
 
@@ -37,7 +38,7 @@
 - Real MCP clients call the stateless JSON-RPC endpoint at `POST /mcp`; no `Mcp-Session-Id` header is required.
 - Default local flow: run `sysmind-mcp` on `:8080` and run `sysmind-ui` on `:3000`.
 - `deploy.sh` runs `./bootstrap-submodules.sh` before `docker compose up -d --build`.
-- `bootstrap-submodules.sh` first syncs/init submodules when `.gitmodules` exists, then clones missing `sysmind-ui` and `sysmind-mcp` checkouts; it exits if either target directory is non-empty but not a Git checkout.
+- `bootstrap-submodules.sh` first syncs/init submodules when `.gitmodules` exists, then clones missing `sysmind-ui`, `sysmind-mcp`, and `sysmind-agent` checkouts; it exits if any target directory is non-empty but not a Git checkout.
 - `deploy.sh`, `shutdown.sh`, and `cleanup-project.sh` wait for Docker Desktop to come up if `docker info` is not yet available.
 - The root Compose stack exposes only nginx on `${NGINX_PORT:-80}`; `sysmind-ui` and `sysmind-mcp` stay on the internal Compose network.
 

@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 submodules=(
   "sysmind-ui|git@github.com:bijuvarghese/sysmind-ui.git"
   "sysmind-mcp|git@github.com:bijuvarghese/sysmind-mcp.git"
+  "sysmind-agent|git@github.com:bijuvarghese/sysmind-agent.git"
 )
 
 is_git_work_tree=false

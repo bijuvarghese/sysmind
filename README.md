@@ -1,9 +1,10 @@
 # SysMind
 
-SysMind is a two-service local MCP workspace:
+SysMind is a multi-service local MCP workspace:
 
 - `sysmind-ui`: Next.js 16 chat UI.
 - `sysmind-mcp`: Spring Boot 4 stateless MCP tool server.
+- `sysmind-agent`: Spring Boot agent service.
 
 Local development defaults:
 
@@ -172,7 +173,7 @@ Run these from the repository root.
 
 | Script | Usage | What it does |
 | --- | --- | --- |
-| `bootstrap-submodules.sh` | `./bootstrap-submodules.sh` | Syncs and initializes Git submodules when `.gitmodules` exists. If a service checkout is missing, it clones `sysmind-ui` and `sysmind-mcp` from GitHub. If a service directory exists but is not a Git checkout, it stops and asks you to move it aside or clone manually. |
+| `bootstrap-submodules.sh` | `./bootstrap-submodules.sh` | Syncs and initializes Git submodules when `.gitmodules` exists. If a service checkout is missing, it clones `sysmind-ui`, `sysmind-mcp`, and `sysmind-agent` from GitHub. If a service directory exists but is not a Git checkout, it stops and asks you to move it aside or clone manually. |
 | `deploy.sh` | `./deploy.sh` | Ensures Docker is running, starts Docker Desktop on macOS when needed, runs `bootstrap-submodules.sh`, then rebuilds and starts the Compose stack with `docker compose up -d --build`. |
 | `shutdown.sh` | `./shutdown.sh` | Ensures Docker is running, then stops this Compose project with `docker compose down --remove-orphans`. It leaves named volumes and locally built images in place. |
 | `cleanup-project.sh` | `./cleanup-project.sh` | Ensures Docker is running, then removes this project’s Compose services, networks, anonymous volumes, orphan containers, and locally built images with `docker compose down --volumes --rmi local --remove-orphans`. It is scoped to this Compose project. |

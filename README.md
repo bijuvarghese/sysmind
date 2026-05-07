@@ -55,7 +55,8 @@ NEWS_CEID=
 LM_STUDIO_BASE_URL=http://localhost:1234
 LM_STUDIO_API_KEY=lm-studio
 LM_STUDIO_MODEL=local-model
-MCP_ENDPOINT_PATH=/mcp
+AGENT_PORT=4000
+MCP_ENDPOINT=/mcp
 TOOL_TIMEOUT=10s
 AGENT_TIMEOUT=60s
 MAX_TOOL_CALLS_PER_USER_REQUEST=3
@@ -76,7 +77,7 @@ The Docker stack also starts Chroma at `http://chroma:8000` for vector storage. 
 | --- | --- | --- | --- |
 | UI | `sysmind-ui` | `http://localhost:3000` | Browser chat interface and API proxy for MCP tool calls. |
 | MCP backend | `sysmind-mcp` | `http://localhost:8080/mcp` | Stateless MCP server exposing local system, news, and Chroma tools. |
-| Agent | `sysmind-agent` | Uses local model server at `http://localhost:1234` | Spring AI agent service configured for LM Studio/OpenAI-compatible chat and MCP tool access. |
+| Agent | `sysmind-agent` | `http://localhost:4000` | Spring AI agent service configured for LM Studio/OpenAI-compatible chat and MCP tool access. |
 | Chroma | Compose service | `http://localhost:8000` locally, `http://chroma:8000` in Compose | Vector database used by MCP health checks and future retrieval features. |
 
 ## MCP Endpoint

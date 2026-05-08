@@ -16,6 +16,20 @@ sysmind-ui
       -> Chroma
 ```
 
+## Current Status
+
+The agent layer is implemented and wired through the root Compose stack. `sysmind-ui` sends chat traffic to `sysmind-agent`, the agent calls LM Studio and `sysmind-mcp`, and `sysmind-mcp` exposes read-only tools for news, Chroma health, and machine status.
+
+Recent hardening work completed:
+
+- Compose health checks for Chroma, MCP, agent, UI, and nginx.
+- Pinned Chroma image with `CHROMA_IMAGE` override.
+- Agent SSE stream composition using Reactor instead of a manual internal subscription.
+- Standalone agent answers for successful tool calls, while preserving raw `steps`.
+- Shared UI tool-result formatter for streaming and non-streaming paths.
+- `MachineStatusCommandRunner` extraction for platform command execution.
+- Structured logging in `latest_news`.
+
 ## Service Responsibilities
 
 | Service | Responsibility |
@@ -66,14 +80,8 @@ sysmind/
 
 ```text
 POST /api/chat
-GET  /api/tools
-GET  /actuator/health
-```
-
-Add streaming after the first non-streaming agent loop is stable:
-
-```text
 POST /api/chat/stream
+GET  /actuator/health
 ```
 
 ## Configuration
@@ -93,18 +101,21 @@ CHROMA_URL=http://localhost:8000
 Docker Compose:
 
 ```env
-SERVER_PORT=4000
+AGENT_PORT=4000
 LM_STUDIO_BASE_URL=http://host.docker.internal:1234/v1
 LM_STUDIO_API_KEY=lm-studio
 LM_STUDIO_MODEL=your-model-name
 MCP_BACKEND_URL=http://sysmind-mcp:8080
 MCP_ENDPOINT=/mcp
 CHROMA_URL=http://chroma:8000
+CHROMA_IMAGE=chromadb/chroma:1.5.0
 ```
 
 ## Implementation Steps
 
 ### 1. Scaffold `sysmind-agent`
+
+Status: complete.
 
 Create a new Maven Spring Boot service under `sysmind-agent`.
 
@@ -119,6 +130,8 @@ Include dependencies for:
 - Spring Boot Test
 
 ### 2. Add Agent Configuration
+
+Status: complete.
 
 Create configuration properties for:
 
@@ -141,6 +154,8 @@ maxToolCalls=3
 
 ### 3. Build The MCP Client
 
+Status: complete.
+
 Create a WebClient-based JSON-RPC client for `sysmind-mcp`.
 
 Support:
@@ -159,6 +174,8 @@ Cache tool definitions from `tools/list` for the first version.
 
 ### 4. Build The LM Studio Client
 
+Status: complete.
+
 Connect to LM Studio through its OpenAI-compatible API.
 
 Start with:
@@ -170,6 +187,8 @@ POST /v1/chat/completions
 Use non-streaming responses first. Add streaming once tool orchestration works.
 
 ### 5. Define Internal Models
+
+Status: complete.
 
 Create models for:
 
@@ -185,6 +204,8 @@ Create models for:
 - `JsonRpcResponse`
 
 ### 6. Implement The First Agent Loop
+
+Status: complete.
 
 Initial flow:
 
@@ -217,7 +238,11 @@ Final responses should use:
 }
 ```
 
+Successful tool calls are now formatted by the agent into standalone answers instead of relying on UI-only step formatting.
+
 ### 7. Add Tool Execution Guardrails
+
+Status: complete for tool existence checks, JSON-compatible argument validation, max tool-call count, per-tool timeout, relevance routing, duplicate successful-call detection, and structured tool logs.
 
 Before executing a tool:
 
@@ -229,6 +254,8 @@ Before executing a tool:
 - Return graceful errors to the model and user.
 
 ### 8. Connect `sysmind-ui` To `sysmind-agent`
+
+Status: complete.
 
 Change the UI flow from:
 
@@ -258,7 +285,7 @@ AGENT_BACKEND_URL=http://sysmind-agent:4000
 
 Add a streaming chat endpoint using WebFlux server-sent events.
 
-Status: complete. `sysmind-agent` exposes `POST /api/chat/stream`, and `sysmind-ui` consumes it through `/api/tool-call/stream`.
+Status: complete. `sysmind-agent` exposes `POST /api/chat/stream`, and `sysmind-ui` consumes it through `/api/tool-call/stream`. The agent stream is composed with Reactor and emits tool lifecycle events plus final message events.
 
 Stream event types:
 
@@ -271,6 +298,8 @@ Stream event types:
 
 ### 10. Add Memory
 
+Status: pending.
+
 Start with in-memory session history.
 
 Later add persistent storage for:
@@ -282,6 +311,8 @@ Later add persistent storage for:
 - Latency and error details
 
 ### 11. Add Docker Compose Wiring
+
+Status: complete.
 
 Add `sysmind-agent` to the root Compose stack.
 
@@ -296,7 +327,11 @@ LM Studio usually runs on the host machine, so Docker should use:
 http://host.docker.internal:1234/v1
 ```
 
+The root Compose stack now uses health checks and `service_healthy` dependencies for Chroma, MCP, agent, UI, and nginx. Chroma is pinned through `CHROMA_IMAGE`.
+
 ### 12. Add Tests
+
+Status: complete for MCP client, LM Studio client, agent loop, controller, model, Chroma service, and MCP tool basics.
 
 Minimum tests:
 
@@ -309,10 +344,12 @@ Minimum tests:
 
 ### 13. Add Observability
 
+Status: partially complete.
+
 Add:
 
-- Actuator health endpoint
-- Structured logs
+- Actuator health endpoint: complete for agent and MCP.
+- Structured logs: complete for tool calls and news feed fetches.
 - Request IDs
 - Tool-call logs
 - Model latency logs
@@ -334,6 +371,8 @@ errorType
 
 ### Milestone 1: Agent Skeleton
 
+Status: complete.
+
 - Create `sysmind-agent`.
 - Add config.
 - Add health endpoint.
@@ -342,17 +381,23 @@ errorType
 
 ### Milestone 2: MCP Client
 
+Status: complete.
+
 - Implement `tools/list`.
 - Implement `tools/call`.
 - Add tests with mocked MCP responses.
 
 ### Milestone 3: LM Studio Client
 
+Status: complete.
+
 - Connect to LM Studio.
 - Send a basic chat request.
 - Return a non-streaming model response.
 
 ### Milestone 4: First Agent Loop
+
+Status: complete.
 
 - Load tools.
 - Let model request a tool.
@@ -362,17 +407,23 @@ errorType
 
 ### Milestone 5: UI Integration
 
+Status: complete.
+
 - Point `sysmind-ui` to `sysmind-agent`.
 - Replace direct tool-call flow with agent chat flow.
 - Show final answers in existing message list.
 
 ### Milestone 6: Streaming And Tool Events
 
+Status: complete.
+
 - Add SSE endpoint.
 - Stream message and tool lifecycle events.
 - Show tool progress in the UI.
 
 ### Milestone 7: Memory And Hardening
+
+Status: in progress. Docker health checks, timeouts, tool guardrails, and logging are in place. Conversation memory and broader request tracing remain future work.
 
 - Add session memory.
 - Add persistent memory if needed.

@@ -46,6 +46,7 @@ Values in `.env.example`:
 ```env
 NGINX_PORT=80
 SPRING_PROFILES_ACTIVE=docker
+CHROMA_IMAGE=chromadb/chroma:1.5.0
 AGENT_BACKEND_URL=http://sysmind-agent:4000
 AGENT_MCP_BACKEND_URL=http://sysmind-mcp:8080
 AGENT_MCP_ENDPOINT=/mcp
@@ -64,9 +65,14 @@ CHROMA_COLLECTION=sysmind
 NEWS_LANGUAGE=en-US
 NEWS_COUNTRY=US
 NEWS_CEID=
+NEXT_ALLOWED_DEV_ORIGINS=
 ```
 
 The Docker stack also starts Chroma at `http://chroma:8000` for vector storage. The `chroma_status` tool lets clients verify connectivity before retrieval features are added.
+
+`CHROMA_IMAGE` pins the Chroma container for repeatable local runs. Override it in `.env` when intentionally testing a newer Chroma image.
+
+`NEXT_ALLOWED_DEV_ORIGINS` is optional and only applies to Next.js development. Set it to a comma-separated list of LAN hosts when another device needs to reach `next dev`.
 
 ## Services
 
@@ -76,6 +82,8 @@ The Docker stack also starts Chroma at `http://chroma:8000` for vector storage. 
 | MCP backend | `sysmind-mcp` | `http://localhost:8080/mcp` | Stateless MCP server exposing local system, news, and Chroma tools. |
 | Agent | `sysmind-agent` | `http://localhost:4000` | Spring AI agent service configured for LM Studio/OpenAI-compatible chat and MCP tool access. |
 | Chroma | Compose service | `http://localhost:8000` locally, `http://chroma:8000` in Compose | Vector database used by MCP health checks and future retrieval features. |
+
+The root Compose stack adds health checks for Chroma, MCP, agent, UI, and nginx. Startup dependencies wait for healthy upstreams where Compose supports `depends_on.condition: service_healthy`.
 
 ## MCP Endpoint
 
@@ -162,6 +170,12 @@ Start or rebuild the full stack:
 
 ```bash
 ./deploy.sh
+```
+
+Validate Compose wiring without starting containers:
+
+```bash
+docker compose config
 ```
 
 Stop this Compose project:

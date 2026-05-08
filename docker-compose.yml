@@ -18,17 +18,30 @@ services:
       - CHROMA_DATABASE=${CHROMA_DATABASE:-default_database}
       - CHROMA_COLLECTION=${CHROMA_COLLECTION:-sysmind}
     depends_on:
-      - chroma
+      chroma:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q 'UP'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
     networks:
       - sysmind-net
 
   # ── Chroma vector database ──────────────────────────────────────────────────
   chroma:
-    image: chromadb/chroma:latest
+    image: ${CHROMA_IMAGE:-chromadb/chroma:1.5.0}
     container_name: sysmind-chroma
     volumes:
       - chroma-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v2/healthcheck', timeout=3).read()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
     networks:
       - sysmind-net
@@ -52,7 +65,14 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      - sysmind-mcp
+      sysmind-mcp:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4000/actuator/health | grep -q 'UP'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
     networks:
       - sysmind-net
@@ -67,7 +87,14 @@ services:
     environment:
       - AGENT_BACKEND_URL=${AGENT_BACKEND_URL:-http://sysmind-agent:4000}
     depends_on:
-      - sysmind-agent
+      sysmind-agent:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
     networks:
       - sysmind-net
@@ -81,8 +108,16 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - sysmind-ui
-      - sysmind-agent
+      sysmind-ui:
+        condition: service_healthy
+      sysmind-agent:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     restart: unless-stopped
     networks:
       - sysmind-net

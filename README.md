@@ -53,7 +53,7 @@ MCP_CHROMA_URL=http://chroma:8000
 AGENT_PORT=4000
 AGENT_LM_STUDIO_BASE_URL=http://host.docker.internal:1234
 AGENT_LM_STUDIO_API_KEY=lm-studio
-AGENT_LM_STUDIO_MODEL=local-model
+AGENT_LM_STUDIO_MODEL=google/gemma-4-e4b
 TOOL_TIMEOUT=10s
 AGENT_TIMEOUT=60s
 MAX_TOOL_CALLS_PER_USER_REQUEST=3
@@ -122,8 +122,6 @@ List tools:
 
 Registered tools:
 
-- `disk_usage`: returns disk free, used, and total values.
-- `ram_usage`: returns memory free, used, and total values.
 - `latest_news`: fetches current web news headlines from the configured RSS feed.
 - `chroma_status`: checks whether the Chroma vector database is reachable.
 - `machine_status`: returns computer name, OS, CPU, RAM, storage, and uptime details.
@@ -136,7 +134,7 @@ Call a tool:
   "id": 3,
   "method": "tools/call",
   "params": {
-    "name": "disk_usage",
+    "name": "machine_status",
     "arguments": {}
   }
 }

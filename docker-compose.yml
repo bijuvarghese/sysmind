@@ -43,7 +43,7 @@ services:
       - AGENT_PORT=${AGENT_PORT:-4000}
       - LM_STUDIO_BASE_URL=${AGENT_LM_STUDIO_BASE_URL:-http://host.docker.internal:1234}
       - LM_STUDIO_API_KEY=${AGENT_LM_STUDIO_API_KEY:-lm-studio}
-      - LM_STUDIO_MODEL=${AGENT_LM_STUDIO_MODEL:-local-model}
+      - LM_STUDIO_MODEL=${AGENT_LM_STUDIO_MODEL:-google/gemma-4-e4b}
       - MCP_BACKEND_URL=${AGENT_MCP_BACKEND_URL:-http://sysmind-mcp:8080}
       - MCP_ENDPOINT=${AGENT_MCP_ENDPOINT:-/mcp}
       - TOOL_TIMEOUT=${TOOL_TIMEOUT:-10s}

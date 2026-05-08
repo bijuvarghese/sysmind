@@ -8,8 +8,6 @@ Goal: keep `sysmind-mcp` as a real Model Context Protocol server that MCP client
 
 Registered MCP tools:
 
-- `disk_usage`
-- `ram_usage`
 - `latest_news`
 - `chroma_status`
 - `machine_status`
@@ -67,8 +65,6 @@ Required mapping:
 
 | Existing Tool | MCP Tool Name | Arguments Schema | Result Shape |
 | --- | --- | --- | --- |
-| `DiskTool` | `disk_usage` | `{}` | Text or structured JSON with total/free/used |
-| `RamTool` | `ram_usage` | `{}` | Text or structured JSON with total/free/used |
 | `NewsTool` | `latest_news` | `query`, `language`, `country`, `ceid` optional strings | Text summary or structured article list |
 | `ChromaStatusTool` | `chroma_status` | `{}` | Text or structured JSON with health/version/config |
 | `MachineStatusTool` | `machine_status` | `{}` | Structured JSON with computer, OS, CPU, RAM, storage, and uptime details |
@@ -81,7 +77,7 @@ Implementation notes:
 - Do not route MCP tool calls through an LLM.
 - Do not keep the old REST prompt router.
 
-Status: complete for `disk_usage`, `ram_usage`, `latest_news`, `chroma_status`, and `machine_status`.
+Status: complete for `latest_news`, `chroma_status`, and `machine_status`.
 
 Deliverable: `tools/list` returns all SysMind tools, and `tools/call` executes each one.
 
@@ -129,7 +125,7 @@ Manual checks:
 
 - Start backend locally.
 - Connect with an MCP inspector/client.
-- Confirm the client lists `disk_usage`, `ram_usage`, `latest_news`, `chroma_status`, and `machine_status`.
+- Confirm the client lists `latest_news`, `chroma_status`, and `machine_status`.
 - Call each tool from the client.
 
 Suggested verification commands:

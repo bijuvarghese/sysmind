@@ -258,6 +258,8 @@ AGENT_BACKEND_URL=http://sysmind-agent:4000
 
 Add a streaming chat endpoint using WebFlux server-sent events.
 
+Status: complete. `sysmind-agent` exposes `POST /api/chat/stream`, and `sysmind-ui` consumes it through `/api/tool-call/stream`.
+
 Stream event types:
 
 - `message.started`

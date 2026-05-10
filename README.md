@@ -5,6 +5,7 @@ SysMind is a multi-service local MCP workspace:
 - `sysmind-ui`: Next.js 16 chat UI.
 - `sysmind-mcp`: Spring Boot 4 stateless MCP tool server.
 - `sysmind-agent`: Spring Boot 4 agent service that can use an OpenAI-compatible local model server and call the MCP backend.
+- `sysmind-ios`: Native SwiftUI iOS chat app that talks directly to the agent over HTTP and server-sent events.
 
 Local development defaults:
 
@@ -79,6 +80,7 @@ The Docker stack also starts Chroma at `http://chroma:8000` for vector storage. 
 | Service | Path | Default URL | Role |
 | --- | --- | --- | --- |
 | UI | `sysmind-ui` | `http://localhost:3000` | Browser chat interface and API proxy for the agent. |
+| iOS | `sysmind-ios` | Agent URL from `SysMindIOS/Info.plist` or in-app settings | Native SwiftUI chat client for the agent. |
 | MCP backend | `sysmind-mcp` | `http://localhost:8080/mcp` | Stateless MCP server exposing local system, news, and Chroma tools. |
 | Agent | `sysmind-agent` | `http://localhost:4000` | Spring AI agent service configured for LM Studio/OpenAI-compatible chat and MCP tool access. |
 | Chroma | Compose service | `http://localhost:8000` locally, `http://chroma:8000` in Compose | Vector database used by MCP health checks and future retrieval features. |
@@ -233,6 +235,15 @@ Agent:
 cd sysmind-agent
 ./mvnw spring-boot:run
 ```
+
+iOS:
+
+```bash
+cd sysmind-ios
+open SysMindIOS.xcodeproj
+```
+
+Run the `SysMindIOS` target in Xcode. The iOS app uses a Clean Architecture layout with `App`, `Presentation`, `Domain`, and `Data` folders. Its root screen is `ChatView`, backed by `ChatViewModel`.
 
 If Next reports another dev server is already running, stop the old process before restarting:
 

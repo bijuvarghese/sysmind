@@ -9,3 +9,7 @@
 [submodule "sysmind-agent"]
 	path = sysmind-agent
 	url = git@github.com:bijuvarghese/sysmind-agent.git
+
+[submodule "sysmind-ios"]
+	path = sysmind-ios
+	url = git@github.com:bijuvarghese/sysmind-ios.git
